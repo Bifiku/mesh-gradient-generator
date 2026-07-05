@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mesh Gradient Generator</title>
+<meta name="description" content="Free mesh gradient generator — soft, blurred multi-color backgrounds. Palette control, draggable blobs, favorites, PNG/JPG export. No sign-up, works offline.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%234781E4'/%3E%3Cstop offset='1' stop-color='%23FF6B2C'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #EDF1F8;
+    --panel: #FFFFFF;
+    --panel-2: #F5F7FB;
+    --line: #DCE3F1;
+    --text: #16233A;
+    --text-2: #61708A;
+    --accent: #4781E4;
+    --accent-2: #FF6B2C;
+    --shadow: 0 10px 40px rgba(11,52,96,0.12);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d0d1c; --panel: #171728; --panel-2: #1f1f34;
+      --line: #2c2c46; --text: #e8e8f0; --text-2: #9a9ab4;
+      --accent: #5a93f0; --accent-2: #ff8347;
+      --shadow: 0 10px 40px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d0d1c; --panel: #171728; --panel-2: #1f1f34;
+    --line: #2c2c46; --text: #e8e8f0; --text-2: #9a9ab4;
+    --accent: #5a93f0; --accent-2: #ff8347;
+    --shadow: 0 10px 40px rgba(0,0,0,0.4);
+  }
+  :root[data-theme="light"] {
+    --bg: #EDF1F8; --panel: #FFFFFF; --panel-2: #F5F7FB;
+    --line: #DCE3F1; --text: #16233A; --text-2: #61708A;
+    --accent: #4781E4; --accent-2: #FF6B2C;
+    --shadow: 0 10px 40px rgba(11,52,96,0.12);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Segoe UI", -apple-system, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app { display: flex; min-height: 100vh; }
+  @media (max-width: 820px) { .app { flex-direction: column; } }
+
+  .panel {
+    width: 336px; flex: none; background: var(--panel);
+    border-right: 1px solid var(--line);
+    padding: 18px 18px 44px; overflow-y: auto; max-height: 100vh;
+  }
+  @media (max-width: 820px) { .panel { width: 100%; max-height: none; border-right: none; border-bottom: 1px solid var(--line); } }
+
+  .brand { display: flex; align-items: center; gap: 9px; margin-bottom: 2px; }
+  .brand .dot { width: 26px; height: 26px; border-radius: 8px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); flex: none; }
+  .brand h1 { font-size: 15px; margin: 0; letter-spacing: -0.01em; }
+  .sub { font-size: 11px; color: var(--text-2); margin: 0; }
+  .brand + .sub { margin: -1px 0 14px 35px; }
+
+  .sect { border-top: 1px solid var(--line); padding: 15px 0 4px; }
+  .sect:first-of-type { border-top: none; }
+  .sect h2 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.09em;
+    color: var(--text-2); margin: 0 0 12px; font-weight: 700;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .sect h2 .link { font-size: 10px; letter-spacing: 0; text-transform: none; color: var(--accent); cursor: pointer; font-weight: 600; }
+
+  .row { display: flex; align-items: center; gap: 8px; margin-bottom: 11px; }
+  .lbl { font-size: 12.5px; color: var(--text); flex: 1; }
+  .val { font-size: 12px; color: var(--text-2); font-variant-numeric: tabular-nums; min-width: 42px; text-align: right; }
+
+  .swatches { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .sw {
+    width: 38px; height: 38px; border-radius: 50%; position: relative;
+    border: 2px solid var(--panel); box-shadow: 0 0 0 1px var(--line); cursor: pointer;
+  }
+  .sw input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .sw .rm {
+    position: absolute; top: -5px; right: -5px; width: 16px; height: 16px;
+    border-radius: 50%; background: var(--text); color: var(--panel);
+    font-size: 11px; line-height: 16px; text-align: center; display: none;
+    border: none; cursor: pointer; padding: 0;
+  }
+  .sw:hover .rm { display: block; }
+  .sw.add {
+    display: flex; align-items: center; justify-content: center;
+    background: var(--panel-2); color: var(--text-2); font-size: 20px;
+    box-shadow: 0 0 0 1px var(--line); border: 2px dashed var(--line);
+  }
+
+  button.act {
+    width: 100%; padding: 9px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--panel-2); color: var(--text); font-size: 12.5px; font-weight: 600;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px;
+    transition: background 0.12s;
+  }
+  button.act:hover { background: var(--line); }
+  button.act.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  button.act.primary:hover { filter: brightness(1.06); }
+  button.act.gen { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; border: none; font-size: 13.5px; padding: 11px; }
+  button.act.gen:hover { filter: brightness(1.06); }
+  .btn-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .mt { margin-top: 9px; }
+
+  .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .preset { height: 34px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; box-shadow: 0 0 0 1px var(--line); }
+  .preset.on { border-color: var(--accent); }
+
+  .mypal { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+  .mprow { display: flex; align-items: center; gap: 6px; }
+  .mprow .bar { flex: 1; height: 26px; border-radius: 7px; box-shadow: 0 0 0 1px var(--line); cursor: pointer; }
+  .mprow .del { width: 24px; height: 24px; flex: none; border: 1px solid var(--line); background: var(--panel-2); color: var(--text-2); border-radius: 7px; cursor: pointer; font-size: 13px; line-height: 1; }
+  .empty { font-size: 11.5px; color: var(--text-2); margin: 8px 0 2px; }
+
+  input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 3px; background: var(--line); outline: none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 2px solid var(--panel); box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+  input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 2px solid var(--panel); }
+  .slwrap { margin-bottom: 13px; }
+  .slwrap .row { margin-bottom: 5px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    padding: 6px 9px; border-radius: 8px; font-size: 11.5px; font-weight: 600;
+    background: var(--panel-2); color: var(--text-2); border: 1px solid var(--line); cursor: pointer;
+    font-variant-numeric: tabular-nums;
+  }
+  .chip.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .dims { display: flex; gap: 8px; align-items: flex-end; }
+  .dims .field { flex: 1; }
+  .dims label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-2); margin-bottom: 4px; }
+  .dims input { width: 100%; padding: 7px 9px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .dims .swap { flex: none; width: 36px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text-2); cursor: pointer; font-size: 15px; }
+
+  .toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 4px; }
+  .toggle .track { width: 38px; height: 22px; border-radius: 12px; background: var(--line); position: relative; transition: background 0.15s; flex: none; }
+  .toggle .track .knob { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left 0.15s; box-shadow: 0 1px 3px rgba(0,0,0,0.25); }
+  .toggle.on .track { background: var(--accent); }
+  .toggle.on .track .knob { left: 18px; }
+
+  .gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+  .gitem { position: relative; border-radius: 9px; overflow: hidden; box-shadow: 0 0 0 1px var(--line); cursor: pointer; aspect-ratio: 1 / 1; background-size: cover; background-position: center; }
+  .gitem .acts { position: absolute; inset: auto 0 0 0; display: flex; gap: 3px; padding: 4px; background: linear-gradient(transparent, rgba(0,0,0,0.55)); opacity: 0; transition: opacity 0.12s; }
+  .gitem:hover .acts { opacity: 1; }
+  .gitem .acts button { flex: 1; border: none; background: rgba(255,255,255,0.9); color: #16233A; border-radius: 5px; font-size: 11px; padding: 3px 0; cursor: pointer; font-weight: 700; }
+
+  .stage {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 32px; position: relative; min-height: 360px;
+    background-image: radial-gradient(var(--line) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  .frame { position: relative; box-shadow: var(--shadow); border-radius: 14px; overflow: hidden; line-height: 0; }
+  #view { display: block; max-width: 100%; }
+  #overlay { position: absolute; inset: 0; cursor: grab; }
+  #overlay.drag { cursor: grabbing; }
+  .stage-foot { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); font-size: 12px; color: var(--text-2); background: var(--panel); padding: 6px 12px; border-radius: 20px; box-shadow: var(--shadow); }
+  .topbtns { position: absolute; top: 14px; right: 16px; display: flex; gap: 8px; }
+  .iconbtn { height: 34px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel); color: var(--text); cursor: pointer; font-size: 13px; }
+  .themebtn { width: 34px; font-size: 15px; }
+  .langbtn { display: flex; overflow: hidden; padding: 0; }
+  .langbtn span { padding: 0 9px; display: flex; align-items: center; font-size: 12px; font-weight: 700; color: var(--text-2); }
+  .langbtn span.on { background: var(--accent); color: #fff; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="panel">
+    <div class="brand">
+      <span class="dot"></span>
+      <h1 data-i18n="brand">Mesh gradients</h1>
+    </div>
+    <p class="sub" data-i18n="sub">Soft mesh gradient backgrounds</p>
+
+    <div class="sect">
+      <h2 data-i18n="palette">Palette</h2>
+      <div class="swatches" id="swatches"></div>
+      <div class="btn-2">
+        <button class="act" id="randColors" data-i18n="random">🎨 Random</button>
+        <button class="act" id="savePalette" data-i18n="savePal">💾 Save</button>
+      </div>
+      <div class="mt"></div>
+      <div class="presets" id="palPresets"></div>
+      <div class="mypal" id="myPalettes"></div>
+    </div>
+
+    <div class="sect">
+      <h2 data-i18n="shape">Shape</h2>
+      <button class="act gen" id="generate" data-i18n="generate">🎲 Generate gradient</button>
+      <button class="act mt" id="shuffle" data-i18n="shuffle">🔀 Shuffle blobs</button>
+      <div class="slwrap mt">
+        <div class="row"><span class="lbl" data-i18n="count">Blob count</span><span class="val" id="countVal">6</span></div>
+        <input type="range" id="count" min="3" max="9" step="1" value="6">
+      </div>
+      <div class="toggle on" id="pointsToggle">
+        <span class="track"><span class="knob"></span></span>
+        <span class="lbl" data-i18n="points">Show points (drag them)</span>
+      </div>
+    </div>
+
+    <div class="sect">
+      <h2 data-i18n="filters">Filters</h2>
+      <div class="slwrap">
+        <div class="row"><span class="lbl" data-i18n="blur">Blur</span><span class="val" id="blurVal">45%</span></div>
+        <input type="range" id="blur" min="0" max="100" step="1" value="45">
+      </div>
+      <div class="slwrap">
+        <div class="row"><span class="lbl" data-i18n="grain">Grain</span><span class="val" id="grainVal">0%</span></div>
+        <input type="range" id="grain" min="0" max="100" step="1" value="0">
+      </div>
+      <div class="slwrap">
+        <div class="row"><span class="lbl" data-i18n="bright">Brightness</span><span class="val" id="brightVal">100%</span></div>
+        <input type="range" id="bright" min="60" max="140" step="1" value="100">
+      </div>
+      <div class="slwrap">
+        <div class="row"><span class="lbl" data-i18n="contrast">Contrast</span><span class="val" id="contrastVal">100%</span></div>
+        <input type="range" id="contrast" min="70" max="130" step="1" value="100">
+      </div>
+      <button class="act" id="resetFilters" data-i18n="reset">↺ Reset filters</button>
+    </div>
+
+    <div class="sect">
+      <h2 data-i18n="canvas">Canvas size</h2>
+      <div class="chips" id="ratioChips"></div>
+      <div class="dims mt">
+        <div class="field"><label data-i18n="width">Width</label><input type="number" id="w" value="1320"></div>
+        <button class="swap" id="swap" data-i18n-title="rotate" title="Rotate">⇄</button>
+        <div class="field"><label data-i18n="height">Height</label><input type="number" id="h" value="2868"></div>
+      </div>
+    </div>
+
+    <div class="sect">
+      <h2 data-i18n="export">Export</h2>
+      <div class="btn-2">
+        <button class="act primary" id="dlPng" data-i18n="dlpng">Download PNG</button>
+        <button class="act" id="dlJpg" data-i18n="dljpg">Download JPG</button>
+      </div>
+      <p class="sub" style="margin-top: 9px;" data-i18n="exportNote">Exact canvas size. PNG keeps transparency, JPG is smaller.</p>
+    </div>
+
+    <div class="sect">
+      <h2><span data-i18n="fav">Favorites</span> <span class="link" id="clearGallery" data-i18n="clear">clear</span></h2>
+      <button class="act primary" id="saveGrad" data-i18n="saveGrad">＋ Save current gradient</button>
+      <div class="gallery" id="gallery"></div>
+      <p class="empty" id="galleryEmpty" data-i18n="favEmpty">Empty. Click “Save” to keep a gradient you like — it stays in your browser.</p>
+    </div>
+  </aside>
+
+  <main class="stage">
+    <div class="topbtns">
+      <div class="iconbtn langbtn" id="langBtn"><span data-l="en">EN</span><span data-l="ru">RU</span></div>
+      <button class="iconbtn themebtn" id="themeBtn" data-i18n-title="theme" title="Theme">◐</button>
+    </div>
+    <div class="frame" id="frame">
+      <canvas id="view"></canvas>
+      <canvas id="overlay"></canvas>
+    </div>
+    <div class="stage-foot" id="foot">1320 × 2868</div>
+  </main>
+</div>
+
+<script>
+(function(){
+  const view = document.getElementById('view');
+  const overlay = document.getElementById('overlay');
+  const vctx = view.getContext('2d');
+  const octx = overlay.getContext('2d');
+
+  const LS_PAL = 'meshgen.palettes.v1';
+  const LS_GAL = 'meshgen.gallery.v1';
+  const LS_LANG = 'meshgen.lang';
+
+  const T = {
+    en: {
+      title:'Mesh Gradient Generator', brand:'Mesh gradients', sub:'Soft mesh gradient backgrounds',
+      palette:'Palette', random:'🎨 Random', savePal:'💾 Save',
+      shape:'Shape', generate:'🎲 Generate gradient', shuffle:'🔀 Shuffle blobs',
+      count:'Blob count', points:'Show points (drag them)',
+      filters:'Filters', blur:'Blur', grain:'Grain', bright:'Brightness', contrast:'Contrast', reset:'↺ Reset filters',
+      canvas:'Canvas size', width:'Width', height:'Height', rotate:'Rotate',
+      export:'Export', dlpng:'Download PNG', dljpg:'Download JPG',
+      exportNote:'Exact canvas size. PNG keeps transparency, JPG is smaller.',
+      fav:'Favorites', clear:'clear', saveGrad:'＋ Save current gradient',
+      favEmpty:'Empty. Click “Save” to keep a gradient you like — it stays in your browser.',
+      theme:'Theme', apply:'Apply', del:'Delete', open:'Open', dlThumb:'Download PNG',
+      rApp:'App Store', rPlay:'Play 9:16', rBanner:'Banner', rSquare:'Square', r21:'2:1', rFull:'Full HD',
+      full:'Could not save — browser storage is full.',
+      limit:'You already have 60 gradients in favorites — delete some first.',
+      clearAsk:'Clear all favorites?',
+    },
+    ru: {
+      title:'Генератор mesh-градиентов', brand:'Mesh-градиенты', sub:'Мягкие mesh-градиенты для фонов',
+      palette:'Палитра', random:'🎨 Случайная', savePal:'💾 Сохранить',
+      shape:'Форма', generate:'🎲 Сгенерировать', shuffle:'🔀 Перемешать пятна',
+      count:'Количество пятен', points:'Показывать точки (тяни мышкой)',
+      filters:'Фильтры', blur:'Размытие', grain:'Зерно', bright:'Яркость', contrast:'Контраст', reset:'↺ Сбросить фильтры',
+      canvas:'Размер холста', width:'Ширина', height:'Высота', rotate:'Повернуть',
+      export:'Экспорт', dlpng:'Скачать PNG', dljpg:'Скачать JPG',
+      exportNote:'Точный размер холста. PNG — с прозрачностью, JPG — меньше весит.',
+      fav:'Избранное', clear:'очистить', saveGrad:'＋ Сохранить текущий',
+      favEmpty:'Пусто. Нажми «Сохранить», чтобы отложить понравившийся градиент — он останется в браузере.',
+      theme:'Тема', apply:'Применить', del:'Удалить', open:'Открыть', dlThumb:'Скачать PNG',
+      rApp:'App Store', rPlay:'Play 9:16', rBanner:'Баннер', rSquare:'Квадрат', r21:'2:1', rFull:'Full HD',
+      full:'Не удалось сохранить — хранилище браузера переполнено.',
+      limit:'В избранном уже 60 градиентов — удали лишние.',
+      clearAsk:'Очистить всё избранное?',
+    },
+  };
+  let lang = (function(){ try{ return localStorage.getItem(LS_LANG) || 'en'; }catch(e){ return 'en'; } })();
+  const t = k => (T[lang] && T[lang][k]) || T.en[k] || k;
+
+  const PRESETS = {
+    'Brand':  ['#4781E4','#FF6B2C','#F4F7FC'],
+    'Sunset': ['#FF9A3D','#FF4E7D','#7B37DC'],
+    'Ocean':  ['#3E86F0','#25C4C4','#E6F6FF'],
+    'Night':  ['#163C86','#5E2C8E','#8E2E7C'],
+    'Mint':   ['#10B981','#3E86F0','#EAF1FB'],
+    'Peach':  ['#FFC24D','#FF7A3C','#FFE6C6'],
+  };
+  const RATIOS = [
+    { key:'rApp',    w: 1320, h: 2868 },
+    { key:'rPlay',   w: 1080, h: 1920 },
+    { key:'rBanner', w: 1024, h: 500 },
+    { key:'rSquare', w: 1080, h: 1080 },
+    { key:'r21',     w: 2000, h: 1000 },
+    { key:'rFull',   w: 1920, h: 1080 },
+  ];
+
+  let palette = PRESETS['Brand'].slice();
+  let blobs = [];
+  let count = 6;
+  let size = { w: 1320, h: 2868 };
+  let fx = { blur: 45, grain: 0, bright: 100, contrast: 100 };
+  let showPoints = true;
+
+  // ── color ──
+  function hexToRgb(h){ h=h.replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join(''); const n=parseInt(h,16); return [n>>16&255, n>>8&255, n&255]; }
+  function rgba(h,a){ const [r,g,b]=hexToRgb(h); return `rgba(${r},${g},${b},${a})`; }
+  function lum(h){ const [r,g,b]=hexToRgb(h); return 0.299*r+0.587*g+0.114*b; }
+  function hslHex(hh,s,l){ s/=100; l/=100; const k=n=>(n+hh/30)%12; const a=s*Math.min(l,1-l); const f=n=>{const c=k(n); return l-a*Math.max(-1,Math.min(c-3,Math.min(9-c,1)));}; const to=v=>Math.round(v*255).toString(16).padStart(2,'0'); return '#'+to(f(0))+to(f(8))+to(f(4)); }
+  const rand=(a,b)=>a+Math.random()*(b-a);
+  function baseOf(pal){ return pal.slice().sort((a,b)=>lum(b)-lum(a))[0]; }
+
+  function randomPalette(){
+    const h = Math.random()*360;
+    const S = 66 + Math.random()*18;
+    const modes = ['analogous','complementary','triadic','split','mono','vibrant'];
+    const mode = modes[Math.floor(Math.random()*modes.length)];
+    if (mode==='analogous')     return [hslHex(h,S,58), hslHex((h+32)%360,S,60), hslHex((h+332)%360,42,88)];
+    if (mode==='complementary') return [hslHex(h,S,56), hslHex((h+180)%360,S,60), hslHex(h,34,90)];
+    if (mode==='triadic')       return [hslHex(h,S,58), hslHex((h+120)%360,S,58), hslHex((h+240)%360,S,60)];
+    if (mode==='split')         return [hslHex(h,S,56), hslHex((h+150)%360,S,60), hslHex((h+210)%360,46,86)];
+    if (mode==='mono')          return [hslHex(h,S,40), hslHex(h,Math.max(30,S-16),62), hslHex(h,Math.max(24,S-30),88)];
+    return [hslHex(Math.random()*360,80,58), hslHex(Math.random()*360,78,60), hslHex(Math.random()*360,72,66)];
+  }
+
+  function seedBrand(){
+    blobs = [
+      { x:.16, y:.14, r:.62, c:0 }, { x:.85, y:.16, r:.60, c:0 },
+      { x:.50, y:.42, r:.54, c:2 }, { x:.50, y:.84, r:.62, c:1 },
+      { x:.88, y:.80, r:.52, c:0 }, { x:.14, y:.76, r:.52, c:2 },
+    ];
+    count = blobs.length;
+  }
+  function shuffleBlobs(){
+    blobs = [];
+    for(let i=0;i<count;i++) blobs.push({ x: rand(0.06,0.94), y: rand(0.06,0.94), r: rand(0.42,0.72), c: i % palette.length });
+  }
+  function reassignColors(){ blobs.forEach((b,i)=>{ b.c = i % palette.length; }); }
+
+  // ── single mesh renderer ──
+  function renderState(ctx, W, H, st){
+    const pal = st.palette, bl = st.blobs, f = st.fx;
+    const OSL = 340;
+    let ow, oh;
+    if (W >= H){ ow = OSL; oh = Math.max(1, Math.round(OSL*H/W)); }
+    else { oh = OSL; ow = Math.max(1, Math.round(OSL*W/H)); }
+    const off = document.createElement('canvas'); off.width = ow; off.height = oh;
+    const o2 = off.getContext('2d');
+    o2.fillStyle = baseOf(pal); o2.fillRect(0,0,ow,oh);
+    const maxD = Math.max(ow,oh);
+    for (const b of bl){
+      const cx=b.x*ow, cy=b.y*oh, rr=b.r*maxD;
+      const g = o2.createRadialGradient(cx,cy,0,cx,cy,rr);
+      g.addColorStop(0, rgba(pal[b.c % pal.length], 0.9));
+      g.addColorStop(1, rgba(pal[b.c % pal.length], 0));
+      o2.fillStyle = g; o2.fillRect(0,0,ow,oh);
+    }
+    const blurPx = f.blur/100 * Math.max(W,H) * 0.055;
+    const m = Math.ceil(blurPx*2 + 2);
+    ctx.clearRect(0,0,W,H);
+    ctx.save();
+    ctx.filter = `blur(${blurPx}px) brightness(${f.bright}%) contrast(${f.contrast}%)`;
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(off, -m, -m, W+2*m, H+2*m);
+    ctx.restore();
+    if (f.grain > 0) applyGrain(ctx, W, H, f.grain);
+  }
+  function applyGrain(ctx, W, H, amount){
+    const n = document.createElement('canvas'); n.width=W; n.height=H;
+    const nctx = n.getContext('2d');
+    const id = nctx.createImageData(W,H); const d = id.data;
+    for (let i=0;i<d.length;i+=4){ const v = 120 + Math.random()*135; d[i]=d[i+1]=d[i+2]=v; d[i+3]=255; }
+    nctx.putImageData(id,0,0);
+    ctx.save(); ctx.globalAlpha = amount/100 * 0.45; ctx.globalCompositeOperation = 'overlay';
+    ctx.drawImage(n,0,0); ctx.restore();
+  }
+
+  function snapshot(){ return { palette: palette.slice(), blobs: blobs.map(b=>({...b})), count, fx: {...fx}, size: {...size} }; }
+
+  // ── preview ──
+  function layout(){
+    const stage = document.querySelector('.stage');
+    const maxW = stage.clientWidth - 64, maxH = stage.clientHeight - 64;
+    const ar = size.w / size.h;
+    let vw = maxW, vh = vw/ar;
+    if (vh > maxH){ vh = maxH; vw = vh*ar; }
+    vw = Math.max(60, Math.round(vw)); vh = Math.max(60, Math.round(vh));
+    view.width = overlay.width = vw; view.height = overlay.height = vh;
+    view.style.width = overlay.style.width = vw+'px';
+    view.style.height = overlay.style.height = vh+'px';
+  }
+  function draw(){
+    renderState(vctx, view.width, view.height, snapshot());
+    drawHandles();
+    document.getElementById('foot').textContent = size.w + ' × ' + size.h;
+  }
+  function drawHandles(){
+    octx.clearRect(0,0,overlay.width,overlay.height);
+    if (!showPoints) return;
+    for (const b of blobs){
+      const x=b.x*overlay.width, y=b.y*overlay.height;
+      octx.beginPath(); octx.arc(x,y,9,0,7); octx.fillStyle='rgba(255,255,255,0.9)'; octx.fill();
+      octx.lineWidth=2; octx.strokeStyle='rgba(0,0,0,0.25)'; octx.stroke();
+      octx.beginPath(); octx.arc(x,y,5,0,7); octx.fillStyle=palette[b.c % palette.length]; octx.fill();
+    }
+  }
+
+  // ── drag blobs ──
+  let dragIdx = -1;
+  function pos(e){ const r=overlay.getBoundingClientRect(); return { x:(e.clientX-r.left)/r.width, y:(e.clientY-r.top)/r.height }; }
+  function nearest(p){ let bi=-1, bd=1e9; blobs.forEach((b,i)=>{ const d=(b.x-p.x)**2+(b.y-p.y)**2; if(d<bd){bd=d;bi=i;} }); return Math.sqrt(bd) < 0.08 ? bi : -1; }
+  overlay.addEventListener('pointerdown', e=>{ if(!showPoints) return; dragIdx=nearest(pos(e)); if(dragIdx>=0){ overlay.classList.add('drag'); overlay.setPointerCapture(e.pointerId); } });
+  overlay.addEventListener('pointermove', e=>{ if(dragIdx<0) return; const p=pos(e); blobs[dragIdx].x=Math.max(0,Math.min(1,p.x)); blobs[dragIdx].y=Math.max(0,Math.min(1,p.y)); draw(); });
+  overlay.addEventListener('pointerup', ()=>{ dragIdx=-1; overlay.classList.remove('drag'); });
+
+  // ── i18n ──
+  function applyLang(){
+    document.documentElement.lang = lang;
+    document.title = t('title');
+    document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.dataset.i18n); });
+    document.querySelectorAll('[data-i18n-title]').forEach(el=>{ el.title = t(el.dataset.i18nTitle); });
+    document.querySelectorAll('#langBtn span').forEach(s=>{ s.classList.toggle('on', s.dataset.l===lang); });
+    renderRatios(); renderMyPalettes(); renderGallery();
+  }
+
+  // ── UI sync ──
+  function syncUI(){
+    document.getElementById('count').value = count;
+    document.getElementById('countVal').textContent = count;
+    document.getElementById('blur').value = fx.blur; document.getElementById('blurVal').textContent = fx.blur+'%';
+    document.getElementById('grain').value = fx.grain; document.getElementById('grainVal').textContent = fx.grain+'%';
+    document.getElementById('bright').value = fx.bright; document.getElementById('brightVal').textContent = fx.bright+'%';
+    document.getElementById('contrast').value = fx.contrast; document.getElementById('contrastVal').textContent = fx.contrast+'%';
+    document.getElementById('w').value = size.w; document.getElementById('h').value = size.h;
+    renderSwatches(); markPreset(); markRatio();
+  }
+
+  // ── palette UI ──
+  function renderSwatches(){
+    const box = document.getElementById('swatches'); box.innerHTML='';
+    palette.forEach((c,i)=>{
+      const s=document.createElement('div'); s.className='sw'; s.style.background=c;
+      const inp=document.createElement('input'); inp.type='color'; inp.value=c;
+      inp.addEventListener('input', ()=>{ palette[i]=inp.value; s.style.background=inp.value; markPreset(); draw(); });
+      s.appendChild(inp);
+      if (palette.length>2){
+        const rm=document.createElement('button'); rm.className='rm'; rm.textContent='×';
+        rm.addEventListener('click', ev=>{ ev.stopPropagation(); palette.splice(i,1); reassignColors(); renderSwatches(); markPreset(); draw(); });
+        s.appendChild(rm);
+      }
+      box.appendChild(s);
+    });
+    if (palette.length<6){
+      const add=document.createElement('div'); add.className='sw add'; add.textContent='+';
+      add.addEventListener('click', ()=>{ palette.push(hslHex(Math.random()*360,70,60)); reassignColors(); renderSwatches(); markPreset(); draw(); });
+      box.appendChild(add);
+    }
+  }
+  function renderPalPresets(){
+    const box=document.getElementById('palPresets'); box.innerHTML='';
+    Object.entries(PRESETS).forEach(([name,cols])=>{
+      const p=document.createElement('div'); p.className='preset'; p.dataset.name=name; p.title=name;
+      p.style.background=`linear-gradient(135deg, ${cols[0]}, ${cols[1]}, ${cols[2]})`;
+      p.addEventListener('click', ()=>{ palette=cols.slice(); reassignColors(); renderSwatches(); markPreset(); draw(); });
+      box.appendChild(p);
+    });
+    markPreset();
+  }
+  function markPreset(){
+    const cur=palette.join(',').toLowerCase();
+    document.querySelectorAll('.preset').forEach(p=>{ p.classList.toggle('on', PRESETS[p.dataset.name].join(',').toLowerCase()===cur); });
+  }
+
+  // ── localStorage ──
+  function lsGet(k,def){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):def; }catch(e){ return def; } }
+  function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); return true; }catch(e){ alert(t('full')); return false; } }
+
+  // ── my palettes ──
+  function renderMyPalettes(){
+    const box=document.getElementById('myPalettes'); box.innerHTML='';
+    const list=lsGet(LS_PAL, []);
+    list.forEach((cols,i)=>{
+      const row=document.createElement('div'); row.className='mprow';
+      const bar=document.createElement('div'); bar.className='bar';
+      bar.style.background=`linear-gradient(90deg, ${cols.join(', ')})`;
+      bar.title=t('apply'); bar.addEventListener('click', ()=>{ palette=cols.slice(); reassignColors(); renderSwatches(); markPreset(); draw(); });
+      const del=document.createElement('button'); del.className='del'; del.textContent='×'; del.title=t('del');
+      del.addEventListener('click', ()=>{ const l=lsGet(LS_PAL,[]); l.splice(i,1); lsSet(LS_PAL,l); renderMyPalettes(); });
+      row.appendChild(bar); row.appendChild(del); box.appendChild(row);
+    });
+  }
+  document.getElementById('savePalette').addEventListener('click', ()=>{
+    const list=lsGet(LS_PAL, []); const key=palette.join(',').toLowerCase();
+    if (list.some(c=>c.join(',').toLowerCase()===key)) return;
+    list.unshift(palette.slice()); lsSet(LS_PAL, list); renderMyPalettes();
+  });
+
+  // ── favorites ──
+  function makeThumb(st){
+    const L=200; const ar=st.size.w/st.size.h; let tw,th;
+    if(ar>=1){ tw=L; th=Math.max(1,Math.round(L/ar)); } else { th=L; tw=Math.max(1,Math.round(L*ar)); }
+    const c=document.createElement('canvas'); c.width=tw; c.height=th;
+    renderState(c.getContext('2d'), tw, th, st);
+    return c.toDataURL('image/jpeg', 0.72);
+  }
+  function renderGallery(){
+    const box=document.getElementById('gallery'); box.innerHTML='';
+    const list=lsGet(LS_GAL, []);
+    document.getElementById('galleryEmpty').style.display = list.length ? 'none' : 'block';
+    list.forEach(item=>{
+      const el=document.createElement('div'); el.className='gitem';
+      el.style.backgroundImage=`url(${item.thumb})`; el.title=t('open');
+      el.addEventListener('click', ()=>{ applyState(item.state); });
+      const acts=document.createElement('div'); acts.className='acts';
+      const dl=document.createElement('button'); dl.textContent='⬇'; dl.title=t('dlThumb');
+      dl.addEventListener('click', ev=>{ ev.stopPropagation(); downloadState(item.state,'image/png','png'); });
+      const rm=document.createElement('button'); rm.textContent='×'; rm.title=t('del');
+      rm.addEventListener('click', ev=>{ ev.stopPropagation(); const l=lsGet(LS_GAL,[]).filter(x=>x.id!==item.id); lsSet(LS_GAL,l); renderGallery(); });
+      acts.appendChild(dl); acts.appendChild(rm); el.appendChild(acts); box.appendChild(el);
+    });
+  }
+  function applyState(st){
+    palette = st.palette.slice(); blobs = st.blobs.map(b=>({...b}));
+    count = st.count; fx = {...st.fx}; size = {...st.size};
+    syncUI(); layout(); draw();
+  }
+  document.getElementById('saveGrad').addEventListener('click', ()=>{
+    const st = snapshot();
+    const list = lsGet(LS_GAL, []);
+    if (list.length >= 60){ alert(t('limit')); return; }
+    const id = String(Date.now()) + Math.random().toString(36).slice(2,6);
+    list.unshift({ id, thumb: makeThumb(st), state: st });
+    if (lsSet(LS_GAL, list)) renderGallery();
+  });
+  document.getElementById('clearGallery').addEventListener('click', ()=>{
+    if (!lsGet(LS_GAL,[]).length) return;
+    if (confirm(t('clearAsk'))){ lsSet(LS_GAL, []); renderGallery(); }
+  });
+
+  // ── sizes ──
+  function renderRatios(){
+    const box=document.getElementById('ratioChips'); box.innerHTML='';
+    RATIOS.forEach(r=>{
+      const c=document.createElement('div'); c.className='chip'; c.textContent=t(r.key);
+      c.addEventListener('click', ()=>{ size={w:r.w,h:r.h}; document.getElementById('w').value=r.w; document.getElementById('h').value=r.h; markRatio(); layout(); draw(); });
+      box.appendChild(c);
+    });
+    markRatio();
+  }
+  function markRatio(){ document.querySelectorAll('#ratioChips .chip').forEach((c,i)=>{ c.classList.toggle('on', RATIOS[i].w===size.w && RATIOS[i].h===size.h); }); }
+
+  // ── export ──
+  function downloadState(st, type, ext, q){
+    const ex=document.createElement('canvas'); ex.width=st.size.w; ex.height=st.size.h;
+    renderState(ex.getContext('2d'), st.size.w, st.size.h, st);
+    const a=document.createElement('a');
+    a.href=ex.toDataURL(type, q); a.download=`mesh-gradient-${st.size.w}x${st.size.h}.${ext}`; a.click();
+  }
+  document.getElementById('dlPng').addEventListener('click', ()=>downloadState(snapshot(),'image/png','png'));
+  document.getElementById('dlJpg').addEventListener('click', ()=>downloadState(snapshot(),'image/jpeg','jpg',0.92));
+
+  // ── events ──
+  document.getElementById('generate').addEventListener('click', ()=>{
+    palette = randomPalette(); count = 4 + Math.floor(Math.random()*4);
+    shuffleBlobs(); syncUI(); draw();
+  });
+  document.getElementById('shuffle').addEventListener('click', ()=>{ shuffleBlobs(); draw(); });
+  document.getElementById('randColors').addEventListener('click', ()=>{ palette=randomPalette(); reassignColors(); renderSwatches(); markPreset(); draw(); });
+  document.getElementById('count').addEventListener('input', e=>{ count=+e.target.value; document.getElementById('countVal').textContent=count; shuffleBlobs(); draw(); });
+  const pt=document.getElementById('pointsToggle');
+  pt.addEventListener('click', ()=>{ showPoints=!showPoints; pt.classList.toggle('on',showPoints); drawHandles(); });
+
+  function bindSlider(id, key, valId){ document.getElementById(id).addEventListener('input', e=>{ fx[key]=+e.target.value; document.getElementById(valId).textContent=e.target.value+'%'; draw(); }); }
+  bindSlider('blur','blur','blurVal'); bindSlider('grain','grain','grainVal');
+  bindSlider('bright','bright','brightVal'); bindSlider('contrast','contrast','contrastVal');
+  document.getElementById('resetFilters').addEventListener('click', ()=>{ fx={blur:45,grain:0,bright:100,contrast:100}; syncUI(); draw(); });
+
+  function syncSize(){ size={ w:Math.max(50,+document.getElementById('w').value||0), h:Math.max(50,+document.getElementById('h').value||0) }; markRatio(); layout(); draw(); }
+  document.getElementById('w').addEventListener('change', syncSize);
+  document.getElementById('h').addEventListener('change', syncSize);
+  document.getElementById('swap').addEventListener('click', ()=>{ size={w:size.h,h:size.w}; document.getElementById('w').value=size.w; document.getElementById('h').value=size.h; markRatio(); layout(); draw(); });
+
+  document.getElementById('themeBtn').addEventListener('click', ()=>{
+    const cur=document.documentElement.getAttribute('data-theme');
+    const dark=cur ? cur==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.setAttribute('data-theme', dark?'light':'dark');
+  });
+  document.getElementById('langBtn').addEventListener('click', e=>{
+    const s=e.target.closest('span'); if(!s) return;
+    lang=s.dataset.l; try{ localStorage.setItem(LS_LANG, lang); }catch(err){}
+    applyLang();
+  });
+  window.addEventListener('resize', ()=>{ layout(); draw(); });
+
+  // ── start ──
+  renderSwatches(); renderPalPresets(); seedBrand(); applyLang(); layout(); draw();
+})();
+</script>
+</body>
+</html>
