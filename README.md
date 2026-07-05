@@ -29,7 +29,7 @@ No sign-up, no dependencies, works offline.
 - 📐 **Canvas presets** — App Store (1320×2868), Play (1080×1920), banner (1024×500), square, 2:1, Full HD — plus custom width/height and rotate.
 - 💾 **Save palettes** — store your own palettes and reapply them with a click.
 - ⭐ **Favorites** — save gradients you like to a gallery (kept in your browser), reopen or download them anytime.
-- ⬇️ **Export** — PNG or JPG at the exact canvas resolution.
+- ⬇️ **Export** — PNG or JPG at the exact resolution, or **SVG** (true scalable vector: radial gradients + gaussian blur, ~2 KB, editable in any vector tool).
 - 🌗 **Light / dark theme** and 🌐 **EN / RU** interface.
 
 Everything runs client-side on `<canvas>`. Nothing is uploaded anywhere.
@@ -91,7 +91,7 @@ features are all fair game. It's one HTML file, so hacking on it is easy.
 - 🎛️ **Фильтры** — размытие, зерно, яркость, контраст.
 - 📐 **Пресеты размеров** — App Store, Play, баннер, квадрат, 2:1, Full HD + свои размеры.
 - 💾 **Сохранение палитр** и ⭐ **избранное** — градиенты хранятся в браузере, можно переоткрыть и скачать.
-- ⬇️ **Экспорт** PNG/JPG в точном размере. 🌗 Тёмная тема, 🌐 переключатель EN/RU.
+- ⬇️ **Экспорт** PNG/JPG в точном размере или **SVG** (настоящий вектор: радиальные градиенты + размытие, ~2 КБ). 🌗 Тёмная тема, 🌐 переключатель EN/RU.
 
 ### Запуск локально
 Один самодостаточный файл: открой `index.html` в браузере, либо `node serve.js`

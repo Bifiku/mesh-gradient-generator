@@ -262,7 +262,8 @@
         <button class="act primary" id="dlPng" data-i18n="dlpng" data-i18n-title="dlpngTip">Download PNG</button>
         <button class="act" id="dlJpg" data-i18n="dljpg" data-i18n-title="dljpgTip">Download JPG</button>
       </div>
-      <p class="sub" style="margin-top: 9px;" data-i18n="exportNote">Saved at the exact canvas size. PNG = lossless, JPG = smaller file.</p>
+      <button class="act mt" id="dlSvg" data-i18n="dlsvg" data-i18n-title="dlsvgTip">⬡ Download SVG (vector)</button>
+      <p class="sub" style="margin-top: 9px;" data-i18n="exportNote">PNG &amp; JPG = exact pixel size. SVG = scalable vector.</p>
     </div>
 
     <div class="sect">
@@ -318,7 +319,8 @@
       export:'Export',
       dlpng:'Download PNG', dlpngTip:'Lossless PNG at the exact canvas size',
       dljpg:'Download JPG', dljpgTip:'Smaller JPG at the exact canvas size',
-      exportNote:'Saved at the exact canvas size. PNG = lossless, JPG = smaller file.',
+      dlsvg:'⬡ Download SVG (vector)', dlsvgTip:'Scalable vector — great for web & editing. Grain is not included in SVG.',
+      exportNote:'PNG & JPG = exact pixel size. SVG = scalable vector.',
       fav:'Favorites', clear:'clear', clearTip:'Remove all saved gradients',
       saveGrad:'＋ Save to favorites', saveGradTip:'Keep this gradient in the gallery below',
       favEmpty:'Empty. Click “Save to favorites” to keep a gradient you like — it stays in your browser.',
@@ -349,7 +351,8 @@
       export:'Экспорт',
       dlpng:'Скачать PNG', dlpngTip:'PNG без потерь в точном размере холста',
       dljpg:'Скачать JPG', dljpgTip:'JPG поменьше в точном размере холста',
-      exportNote:'Сохраняется в точном размере холста. PNG — без потерь, JPG — меньше весит.',
+      dlsvg:'⬡ Скачать SVG (вектор)', dlsvgTip:'Масштабируемый вектор — для веба и редактирования. Зерно в SVG не входит.',
+      exportNote:'PNG и JPG — точный размер в пикселях. SVG — масштабируемый вектор.',
       fav:'Избранное', clear:'очистить', clearTip:'Удалить все сохранённые градиенты',
       saveGrad:'＋ В избранное', saveGradTip:'Отложить этот градиент в галерею ниже',
       favEmpty:'Пусто. Нажми «В избранное», чтобы отложить понравившийся градиент — он останется в браузере.',
@@ -642,8 +645,31 @@
     const a=document.createElement('a');
     a.href=ex.toDataURL(type, q); a.download=`mesh-gradient-${st.size.w}x${st.size.h}.${ext}`; a.click();
   }
+  function buildSVG(st){
+    const W=st.size.w, H=st.size.h, pal=st.palette, bl=st.blobs, f=st.fx, maxD=Math.max(W,H);
+    const std = f.blur/100 * maxD * 0.055;
+    const M = Math.ceil(std*3 + 2);
+    const bc = hex => { const [r,g,b]=hexToRgb(hex), bf=f.bright/100, cf=f.contrast/100;
+      const adj=v=>{ let x=v*bf; x=(x-127.5)*cf+127.5; return Math.max(0,Math.min(255,Math.round(x))); };
+      return adj(r)+','+adj(g)+','+adj(b); };
+    let defs='', rects=`<rect x="${-M}" y="${-M}" width="${W+2*M}" height="${H+2*M}" fill="rgb(${bc(baseOf(pal))})"/>`;
+    bl.forEach((b,i)=>{
+      const col=bc(pal[b.c % pal.length]);
+      defs+=`<radialGradient id="g${i}" gradientUnits="userSpaceOnUse" cx="${(b.x*W).toFixed(1)}" cy="${(b.y*H).toFixed(1)}" r="${(b.r*maxD).toFixed(1)}"><stop offset="0" stop-color="rgb(${col})" stop-opacity="0.9"/><stop offset="1" stop-color="rgb(${col})" stop-opacity="0"/></radialGradient>`;
+      rects+=`<rect x="${-M}" y="${-M}" width="${W+2*M}" height="${H+2*M}" fill="url(#g${i})"/>`;
+    });
+    const flt=`<filter id="blur" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="${std.toFixed(2)}"/></filter>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><defs>${defs}${flt}<clipPath id="clip"><rect width="${W}" height="${H}"/></clipPath></defs><g clip-path="url(#clip)"><g filter="url(#blur)">${rects}</g></g></svg>`;
+  }
+  function downloadSVG(st){
+    const blob=new Blob([buildSVG(st)],{type:'image/svg+xml;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download=`mesh-gradient-${st.size.w}x${st.size.h}.svg`; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1500);
+  }
   document.getElementById('dlPng').addEventListener('click', ()=>downloadState(snapshot(),'image/png','png'));
   document.getElementById('dlJpg').addEventListener('click', ()=>downloadState(snapshot(),'image/jpeg','jpg',0.92));
+  document.getElementById('dlSvg').addEventListener('click', ()=>downloadSVG(snapshot()));
 
   // ── events ──
   document.getElementById('generate').addEventListener('click', ()=>{
