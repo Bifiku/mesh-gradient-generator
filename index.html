@@ -104,6 +104,7 @@
   button.act.primary:hover { filter: brightness(1.06); }
   button.act.gen { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; border: none; font-size: 13.5px; padding: 11px; }
   button.act.gen:hover { filter: brightness(1.06); }
+  .genhero { margin: 2px 0 14px; }
   .btn-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .mt { margin-top: 9px; }
 
@@ -177,12 +178,14 @@
     </div>
     <p class="sub" data-i18n="sub">Soft mesh gradient backgrounds</p>
 
+    <button class="act gen genhero" id="generate" data-i18n="generate" data-i18n-title="generateTip">🎲 New random gradient</button>
+
     <div class="sect">
       <h2 data-i18n="palette">Palette</h2>
       <div class="swatches" id="swatches"></div>
       <div class="btn-2">
-        <button class="act" id="randColors" data-i18n="random">🎨 Random</button>
-        <button class="act" id="savePalette" data-i18n="savePal">💾 Save</button>
+        <button class="act" id="randColors" data-i18n="random" data-i18n-title="randomTip">🎨 Random colors</button>
+        <button class="act" id="savePalette" data-i18n="savePal" data-i18n-title="savePalTip">💾 Save palette</button>
       </div>
       <div class="mt"></div>
       <div class="presets" id="palPresets"></div>
@@ -190,38 +193,37 @@
     </div>
 
     <div class="sect">
-      <h2 data-i18n="shape">Shape</h2>
-      <button class="act gen" id="generate" data-i18n="generate">🎲 Generate gradient</button>
-      <button class="act mt" id="shuffle" data-i18n="shuffle">🔀 Shuffle blobs</button>
+      <h2 data-i18n="layout">Layout</h2>
+      <button class="act" id="shuffle" data-i18n="shuffle" data-i18n-title="shuffleTip">🔀 Shuffle positions</button>
       <div class="slwrap mt">
-        <div class="row"><span class="lbl" data-i18n="count">Blob count</span><span class="val" id="countVal">6</span></div>
+        <div class="row"><span class="lbl" data-i18n="count" data-i18n-title="countTip">Color spots</span><span class="val" id="countVal">6</span></div>
         <input type="range" id="count" min="3" max="9" step="1" value="6">
       </div>
-      <div class="toggle on" id="pointsToggle">
+      <div class="toggle on" id="pointsToggle" data-i18n-title="pointsTip">
         <span class="track"><span class="knob"></span></span>
-        <span class="lbl" data-i18n="points">Show points (drag them)</span>
+        <span class="lbl" data-i18n="points">Drag handles</span>
       </div>
     </div>
 
     <div class="sect">
       <h2 data-i18n="filters">Filters</h2>
       <div class="slwrap">
-        <div class="row"><span class="lbl" data-i18n="blur">Blur</span><span class="val" id="blurVal">45%</span></div>
+        <div class="row"><span class="lbl" data-i18n="blur" data-i18n-title="blurTip">Blur</span><span class="val" id="blurVal">45%</span></div>
         <input type="range" id="blur" min="0" max="100" step="1" value="45">
       </div>
       <div class="slwrap">
-        <div class="row"><span class="lbl" data-i18n="grain">Grain</span><span class="val" id="grainVal">0%</span></div>
+        <div class="row"><span class="lbl" data-i18n="grain" data-i18n-title="grainTip">Grain</span><span class="val" id="grainVal">0%</span></div>
         <input type="range" id="grain" min="0" max="100" step="1" value="0">
       </div>
       <div class="slwrap">
-        <div class="row"><span class="lbl" data-i18n="bright">Brightness</span><span class="val" id="brightVal">100%</span></div>
+        <div class="row"><span class="lbl" data-i18n="bright" data-i18n-title="brightTip">Brightness</span><span class="val" id="brightVal">100%</span></div>
         <input type="range" id="bright" min="60" max="140" step="1" value="100">
       </div>
       <div class="slwrap">
-        <div class="row"><span class="lbl" data-i18n="contrast">Contrast</span><span class="val" id="contrastVal">100%</span></div>
+        <div class="row"><span class="lbl" data-i18n="contrast" data-i18n-title="contrastTip">Contrast</span><span class="val" id="contrastVal">100%</span></div>
         <input type="range" id="contrast" min="70" max="130" step="1" value="100">
       </div>
-      <button class="act" id="resetFilters" data-i18n="reset">↺ Reset filters</button>
+      <button class="act" id="resetFilters" data-i18n="reset" data-i18n-title="resetTip">↺ Reset filters</button>
     </div>
 
     <div class="sect">
@@ -237,15 +239,15 @@
     <div class="sect">
       <h2 data-i18n="export">Export</h2>
       <div class="btn-2">
-        <button class="act primary" id="dlPng" data-i18n="dlpng">Download PNG</button>
-        <button class="act" id="dlJpg" data-i18n="dljpg">Download JPG</button>
+        <button class="act primary" id="dlPng" data-i18n="dlpng" data-i18n-title="dlpngTip">Download PNG</button>
+        <button class="act" id="dlJpg" data-i18n="dljpg" data-i18n-title="dljpgTip">Download JPG</button>
       </div>
-      <p class="sub" style="margin-top: 9px;" data-i18n="exportNote">Exact canvas size. PNG keeps transparency, JPG is smaller.</p>
+      <p class="sub" style="margin-top: 9px;" data-i18n="exportNote">Saved at the exact canvas size. PNG = lossless, JPG = smaller file.</p>
     </div>
 
     <div class="sect">
-      <h2><span data-i18n="fav">Favorites</span> <span class="link" id="clearGallery" data-i18n="clear">clear</span></h2>
-      <button class="act primary" id="saveGrad" data-i18n="saveGrad">＋ Save current gradient</button>
+      <h2><span data-i18n="fav">Favorites</span> <span class="link" id="clearGallery" data-i18n="clear" data-i18n-title="clearTip">clear</span></h2>
+      <button class="act primary" id="saveGrad" data-i18n="saveGrad" data-i18n-title="saveGradTip">＋ Save to favorites</button>
       <div class="gallery" id="gallery"></div>
       <p class="empty" id="galleryEmpty" data-i18n="favEmpty">Empty. Click “Save” to keep a gradient you like — it stays in your browser.</p>
     </div>
@@ -253,7 +255,7 @@
 
   <main class="stage">
     <div class="topbtns">
-      <div class="iconbtn langbtn" id="langBtn"><span data-l="en">EN</span><span data-l="ru">RU</span></div>
+      <div class="iconbtn langbtn" id="langBtn" data-i18n-title="langTip"><span data-l="en">EN</span><span data-l="ru">RU</span></div>
       <button class="iconbtn themebtn" id="themeBtn" data-i18n-title="theme" title="Theme">◐</button>
     </div>
     <div class="frame" id="frame">
@@ -278,16 +280,30 @@
   const T = {
     en: {
       title:'Mesh Gradient Generator', brand:'Mesh gradients', sub:'Soft mesh gradient backgrounds',
-      palette:'Palette', random:'🎨 Random', savePal:'💾 Save',
-      shape:'Shape', generate:'🎲 Generate gradient', shuffle:'🔀 Shuffle blobs',
-      count:'Blob count', points:'Show points (drag them)',
-      filters:'Filters', blur:'Blur', grain:'Grain', bright:'Brightness', contrast:'Contrast', reset:'↺ Reset filters',
-      canvas:'Canvas size', width:'Width', height:'Height', rotate:'Rotate',
-      export:'Export', dlpng:'Download PNG', dljpg:'Download JPG',
-      exportNote:'Exact canvas size. PNG keeps transparency, JPG is smaller.',
-      fav:'Favorites', clear:'clear', saveGrad:'＋ Save current gradient',
-      favEmpty:'Empty. Click “Save” to keep a gradient you like — it stays in your browser.',
-      theme:'Theme', apply:'Apply', del:'Delete', open:'Open', dlThumb:'Download PNG',
+      generate:'🎲 New random gradient', generateTip:'New colors and a new layout at once',
+      palette:'Palette',
+      random:'🎨 Random colors', randomTip:'A fresh harmonious palette — keeps the current layout',
+      savePal:'💾 Save palette', savePalTip:'Save these colors to reuse later',
+      layout:'Layout',
+      shuffle:'🔀 Shuffle positions', shuffleTip:'Move the color spots around — keeps the palette',
+      count:'Color spots', countTip:'How many color spots blend into the gradient',
+      points:'Drag handles', pointsTip:'Show dots on the canvas — drag them to move each color',
+      filters:'Filters',
+      blur:'Blur', blurTip:'How softly the colors blend together',
+      grain:'Grain', grainTip:'Adds subtle film-like noise',
+      bright:'Brightness', brightTip:'Overall lightness',
+      contrast:'Contrast', contrastTip:'Difference between light and dark areas',
+      reset:'↺ Reset filters', resetTip:'Back to default filter values',
+      canvas:'Canvas size', width:'Width', height:'Height', rotate:'Swap width and height',
+      export:'Export',
+      dlpng:'Download PNG', dlpngTip:'Lossless PNG at the exact canvas size',
+      dljpg:'Download JPG', dljpgTip:'Smaller JPG at the exact canvas size',
+      exportNote:'Saved at the exact canvas size. PNG = lossless, JPG = smaller file.',
+      fav:'Favorites', clear:'clear', clearTip:'Remove all saved gradients',
+      saveGrad:'＋ Save to favorites', saveGradTip:'Keep this gradient in the gallery below',
+      favEmpty:'Empty. Click “Save to favorites” to keep a gradient you like — it stays in your browser.',
+      theme:'Toggle light / dark theme', langTip:'Interface language',
+      apply:'Apply this palette', del:'Delete', open:'Open this gradient', dlThumb:'Download PNG',
       rApp:'App Store', rPlay:'Play 9:16', rBanner:'Banner', rSquare:'Square', r21:'2:1', rFull:'Full HD',
       full:'Could not save — browser storage is full.',
       limit:'You already have 60 gradients in favorites — delete some first.',
@@ -295,16 +311,30 @@
     },
     ru: {
       title:'Генератор mesh-градиентов', brand:'Mesh-градиенты', sub:'Мягкие mesh-градиенты для фонов',
-      palette:'Палитра', random:'🎨 Случайная', savePal:'💾 Сохранить',
-      shape:'Форма', generate:'🎲 Сгенерировать', shuffle:'🔀 Перемешать пятна',
-      count:'Количество пятен', points:'Показывать точки (тяни мышкой)',
-      filters:'Фильтры', blur:'Размытие', grain:'Зерно', bright:'Яркость', contrast:'Контраст', reset:'↺ Сбросить фильтры',
-      canvas:'Размер холста', width:'Ширина', height:'Высота', rotate:'Повернуть',
-      export:'Экспорт', dlpng:'Скачать PNG', dljpg:'Скачать JPG',
-      exportNote:'Точный размер холста. PNG — с прозрачностью, JPG — меньше весит.',
-      fav:'Избранное', clear:'очистить', saveGrad:'＋ Сохранить текущий',
-      favEmpty:'Пусто. Нажми «Сохранить», чтобы отложить понравившийся градиент — он останется в браузере.',
-      theme:'Тема', apply:'Применить', del:'Удалить', open:'Открыть', dlThumb:'Скачать PNG',
+      generate:'🎲 Новый случайный градиент', generateTip:'Сразу новые цвета и новая раскладка',
+      palette:'Палитра',
+      random:'🎨 Случайные цвета', randomTip:'Новая гармоничная палитра — раскладка остаётся',
+      savePal:'💾 Сохранить палитру', savePalTip:'Сохранить эти цвета, чтобы применять потом',
+      layout:'Раскладка',
+      shuffle:'🔀 Перемешать пятна', shuffleTip:'Переставить цветные пятна — палитра остаётся',
+      count:'Цветных пятен', countTip:'Сколько цветных пятен смешивается в градиенте',
+      points:'Двигать точки', pointsTip:'Показать точки на холсте — тяни, чтобы двигать каждый цвет',
+      filters:'Фильтры',
+      blur:'Размытие', blurTip:'Насколько мягко смешиваются цвета',
+      grain:'Зерно', grainTip:'Добавляет лёгкое зерно, как на плёнке',
+      bright:'Яркость', brightTip:'Общая светлота',
+      contrast:'Контраст', contrastTip:'Разница между светлым и тёмным',
+      reset:'↺ Сбросить фильтры', resetTip:'Вернуть значения фильтров по умолчанию',
+      canvas:'Размер холста', width:'Ширина', height:'Высота', rotate:'Поменять ширину и высоту местами',
+      export:'Экспорт',
+      dlpng:'Скачать PNG', dlpngTip:'PNG без потерь в точном размере холста',
+      dljpg:'Скачать JPG', dljpgTip:'JPG поменьше в точном размере холста',
+      exportNote:'Сохраняется в точном размере холста. PNG — без потерь, JPG — меньше весит.',
+      fav:'Избранное', clear:'очистить', clearTip:'Удалить все сохранённые градиенты',
+      saveGrad:'＋ В избранное', saveGradTip:'Отложить этот градиент в галерею ниже',
+      favEmpty:'Пусто. Нажми «В избранное», чтобы отложить понравившийся градиент — он останется в браузере.',
+      theme:'Светлая / тёмная тема', langTip:'Язык интерфейса',
+      apply:'Применить эту палитру', del:'Удалить', open:'Открыть этот градиент', dlThumb:'Скачать PNG',
       rApp:'App Store', rPlay:'Play 9:16', rBanner:'Баннер', rSquare:'Квадрат', r21:'2:1', rFull:'Full HD',
       full:'Не удалось сохранить — хранилище браузера переполнено.',
       limit:'В избранном уже 60 градиентов — удали лишние.',
@@ -577,7 +607,7 @@
   function renderRatios(){
     const box=document.getElementById('ratioChips'); box.innerHTML='';
     RATIOS.forEach(r=>{
-      const c=document.createElement('div'); c.className='chip'; c.textContent=t(r.key);
+      const c=document.createElement('div'); c.className='chip'; c.textContent=t(r.key); c.title=r.w+' × '+r.h;
       c.addEventListener('click', ()=>{ size={w:r.w,h:r.h}; document.getElementById('w').value=r.w; document.getElementById('h').value=r.h; markRatio(); layout(); draw(); });
       box.appendChild(c);
     });
